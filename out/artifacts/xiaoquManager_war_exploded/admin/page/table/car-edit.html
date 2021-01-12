@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../../lib/layui-v2.5.5/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../css/public.css" media="all">
+    <style>
+        body {
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+<div class="layui-form layuimini-form" lay-filter="example">
+    <div class="layui-form-item">
+        <label class="layui-form-label required">车辆照片</label>
+        <div class="layui-input-block">
+            <div class="layui-upload">
+                <button type="button" class="layui-btn" id="test1">上传图片</button>
+                <div class="layui-upload-list">
+                    <input type="hidden" name="id" id="id">
+                    <img class="layui-upload-img" id="demo1" width="120px" height="120px">
+                    <p id="demoText"></p>
+                    <input type="hidden" value="" name="image" id="image">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label required">所属成员</label>
+        <div class="layui-input-block">
+            <input type="text" name="name" lay-verify="required"  value="" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label required">车辆颜色</label>
+        <div class="layui-input-block">
+            <input type="text" name="color" lay-verify="required"  value="" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label required">车牌号</label>
+        <div class="layui-input-block">
+            <input type="text" name="number" lay-verify="required"  value="" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label required">备注</label>
+        <div class="layui-input-block">
+            <input type="text" name="info" lay-verify="required"  value="" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">创建时间</label>
+        <div class="layui-input-inline">
+            <input type="text" name="time" class="layui-input" id="test5" placeholder="yyyy-MM-dd HH:mm:ss">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn layui-btn-normal" lay-submit lay-filter="saveBtn">确认保存</button>
+        </div>
+    </div>
+</div>
+<script src="../../lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+<script>
+    layui.use(['form','laydate','upload'], function () {
+        var form = layui.form,
+            layer = layui.layer,
+            $ = layui.$,
+            laydate = layui.laydate,
+            upload = layui.upload;
+
+        //图片上传
+        var uploadInst = upload.render({
+            elem: '#test1'
+            ,url: '/car?method=upload' //改成您自己的上传接口
+            ,before: function(obj){
+                //预读本地文件示例，不支持ie8
+                obj.preview(function(index, file, result){
+                    $('#demo1').attr('src', result); //图片链接（base64）
+                });
+            }
+            ,done: function(res){
+                //如果上传失败
+                if(res.code > 0){
+                    return layer.msg('上传失败');
+                }
+                //上传成功,将图片的保存在服务器的地址，保存下来，并在点击提交的时候，将地址一并提交到后台
+                $("#image").val(res.image);
+
+            }
+            ,error: function(){
+                //演示失败状态，并实现重传
+                var demoText = $('#demoText');
+                demoText.html('<span style="color: #FF5722;">上传失败</span> <a class="layui-btn layui-btn-xs demo-reload">重试</a>');
+                demoText.find('.demo-reload').on('click', function(){
+                    uploadInst.upload();
+                });
+            }
+        });
+
+        //时间组件
+        laydate.render({
+            elem: '#test',
+            trigger: 'click'
+        });
+        //日期时间选择器
+        laydate.render({
+            elem: '#test5'
+            ,type: 'datetime',
+            trigger: 'click'
+        });
+        //根据id获取小区详情
+        var id = localStorage.getItem("id");
+        //发送请求获取数据
+        $.get({
+            url:"/car?method=one",
+            data:{
+                id: id
+            },
+            success : function (res) {
+                //将数据填充到表单中
+                if(res.code == 200){
+                    var person = res.data[0];
+                    //显示头像
+                    $("#demo1")[0].src = person.image;
+                    //$("#demo1").attr("src",book.image);
+                    //表单赋值
+                    form.val('example', {
+                        "id": person.id,
+                        "image": person.image,
+                        "name": person.name,
+                        "color": person.color,
+                        "number": person.number,
+                        "info": person.info,
+                        "time": person.time
+                    });
+                    //将localStorage清空
+                    localStorage.clear();
+                }
+            }
+        });
+
+        //监听提交
+        form.on('submit(saveBtn)', function (data) {
+            $.post({
+                url: "/car?method=update",
+                data: {
+                    car: JSON.stringify(data.field)//json对象转换成json字符串
+                },
+                success: function (res) {
+                    // 关闭弹出层
+                    var iframeIndex = parent.layer.getFrameIndex(window.name);
+                    parent.layer.close(iframeIndex);
+                }
+            });
+            return false;
+        });
+
+    });
+</script>
+</body>
+</html>

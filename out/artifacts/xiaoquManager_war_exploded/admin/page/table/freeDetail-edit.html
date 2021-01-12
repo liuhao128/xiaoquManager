@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../../lib/layui-v2.5.5/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../css/public.css" media="all">
+    <style>
+        body {
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+<div class="layui-form layuimini-form" lay-filter="example">
+    <div class="layui-form-item">
+        <label class="layui-form-label">所属小区</label>
+        <div class="layui-input-block">
+            <input type="hidden" id="id" name="id">
+            <select name="garden" lay-filter="garden">
+                <option value=""></option>
+                <option value="光谷小区0">光谷小区0</option>
+                <option value="光谷小区1" selected="">光谷小区1</option>
+                <option value="光谷小区2">光谷小区2</option>
+                <option value="光谷小区3">光谷小区3</option>
+                <option value="光谷小区4">光谷小区4</option>
+            </select>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label required">收费项目</label>
+        <div class="layui-input-block">
+            <select name="project" lay-filter="garden">
+                <option value=""></option>
+                <option value="停车位">停车位</option>
+                <option value="广告牌" selected="">广告牌</option>
+                <option value="停车位">停车位2</option>
+                <option value="停车位">停车位3</option>
+                <option value="停车位">停车位4</option>
+            </select>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label required">业主</label>
+        <div class="layui-input-block">
+            <input type="text" name="owner" lay-verify="required"  value="" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label required">应收金额</label>
+        <div class="layui-input-block">
+            <input type="text" name="fromMoney" lay-verify="required"  value="" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label required">实收金额</label>
+        <div class="layui-input-block">
+            <input type="text" name="actualMoney" lay-verify="required"  value="" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label required">备注</label>
+        <div class="layui-input-block">
+            <input type="text" name="info" lay-verify="required"  value="" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label required">缴费时间</label>
+        <div class="layui-input-block">
+            <input type="text" name="freeTime" class="layui-input" id="test" value="" placeholder="yyyy-MM-dd">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label required">创建时间</label>
+        <div class="layui-input-inline">
+            <input type="text" name="createTime" class="layui-input" id="test5" value="" placeholder="yyyy-MM-dd HH:mm:ss">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn layui-btn-normal" lay-submit lay-filter="saveBtn">确认保存</button>
+        </div>
+    </div>
+</div>
+<script src="../../lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+<script>
+    layui.use(['form','laydate','upload'], function () {
+        var form = layui.form,
+            layer = layui.layer,
+            $ = layui.$,
+            laydate = layui.laydate,
+            upload = layui.upload;
+
+        //图片上传
+        var uploadInst = upload.render({
+            elem: '#test1'
+            ,url: '/detail?method=upload' //改成您自己的上传接口
+            ,before: function(obj){
+                //预读本地文件示例，不支持ie8
+                obj.preview(function(index, file, result){
+                    $('#demo1').attr('src', result); //图片链接（base64）
+                });
+            }
+            ,done: function(res){
+                //如果上传失败
+                if(res.code > 0){
+                    return layer.msg('上传失败');
+                }
+                //上传成功,将图片的保存在服务器的地址，保存下来，并在点击提交的时候，将地址一并提交到后台
+                $("#image").val(res.image);
+
+            }
+            ,error: function(){
+                //演示失败状态，并实现重传
+                var demoText = $('#demoText');
+                demoText.html('<span style="color: #FF5722;">上传失败</span> <a class="layui-btn layui-btn-xs demo-reload">重试</a>');
+                demoText.find('.demo-reload').on('click', function(){
+                    uploadInst.upload();
+                });
+            }
+        });
+
+        //时间组件
+        laydate.render({
+            elem: '#test',
+            trigger: 'click'
+        });
+        //日期时间选择器
+        laydate.render({
+            elem: '#test5'
+            ,type: 'datetime',
+            trigger: 'click'
+        });
+
+        //根据id获取小区详情
+        var id = localStorage.getItem("id");
+        //发送请求获取数据
+        $.get({
+            url:"/detail?method=one",
+            data:{
+                id:id
+            },
+            success : function (res) {
+                //将数据填充到表单中
+                if(res.code == 200){
+                    var freeDetail = res.data[0];
+                    //$("#demo1").attr("src",book.image);
+                    //表单赋值
+                    form.val('example', {
+                        "id": freeDetail.id,
+                        "garden": freeDetail.garden,
+                        "project": freeDetail.project,
+                        "owner": freeDetail.owner,
+                        "fromMoney": freeDetail.fromMoney,
+                        "actualMoney": freeDetail.actualMoney,
+                        "info": freeDetail.info,
+                        "freeTime": freeDetail.freeTime,
+                        "createTime": freeDetail.createTime
+                    });
+                    //将localStorage清空
+                    localStorage.clear();
+                }
+            }
+        });
+
+        //监听提交
+        form.on('submit(saveBtn)', function (data) {
+            $.post({
+                url: "/detail?method=update",
+                data: {
+                    freeDetail: JSON.stringify(data.field)//json对象转换成json字符串
+                },
+                success: function (res) {
+                    // 关闭弹出层
+                    var iframeIndex = parent.layer.getFrameIndex(window.name);
+                    parent.layer.close(iframeIndex);
+                }
+            });
+            return false;
+        });
+
+    });
+</script>
+</body>
+</html>
